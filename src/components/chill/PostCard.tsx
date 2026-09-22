@@ -45,7 +45,7 @@ export function PostCard({ post, meId }: { post: FeedPost; meId: string }) {
     queryFn: async () => {
       const { data } = await supabase
         .from("comments")
-        .select("*, author:profiles!comments_user_id_fkey(*)")
+        .select("*, author:profiles!comments_author_fkey(*)")
         .eq("post_id", post.id)
         .order("created_at");
       return (data ?? []) as Array<{
