@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedSnapRouteImport } from './routes/_authenticated/snap'
 import { Route as AuthenticatedChatUserIdRouteImport } from './routes/_authenticated/chat.$userId'
 
@@ -32,9 +35,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
@@ -45,6 +58,11 @@ const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
 const AuthenticatedReelsRoute = AuthenticatedReelsRouteImport.update({
   id: '/reels',
   path: '/reels',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSnapRoute = AuthenticatedSnapRouteImport.update({
@@ -61,18 +79,24 @@ const AuthenticatedChatUserIdRoute = AuthenticatedChatUserIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/reels': typeof AuthenticatedReelsRoute
+  '/search': typeof AuthenticatedSearchRoute
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/chat': typeof AuthenticatedChatRouteWithChildren
+  '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/reels': typeof AuthenticatedReelsRoute
+  '/search': typeof AuthenticatedSearchRoute
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
 }
@@ -81,26 +105,51 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/chat': typeof AuthenticatedChatRouteWithChildren
+  '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
+  '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/snap': typeof AuthenticatedSnapRoute
   '/_authenticated/chat/$userId': typeof AuthenticatedChatUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/chat' | '/feed' | '/reels' | '/snap' | '/chat/$userId'
+    | '/'
+    | '/auth'
+    | '/activity'
+    | '/chat'
+    | '/create'
+    | '/feed'
+    | '/reels'
+    | '/search'
+    | '/snap'
+    | '/chat/$userId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/chat' | '/feed' | '/reels' | '/snap' | '/chat/$userId'
+  to:
+    | '/'
+    | '/auth'
+    | '/activity'
+    | '/chat'
+    | '/create'
+    | '/feed'
+    | '/reels'
+    | '/search'
+    | '/snap'
+    | '/chat/$userId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/activity'
     | '/_authenticated/chat'
+    | '/_authenticated/create'
     | '/_authenticated/feed'
     | '/_authenticated/reels'
+    | '/_authenticated/search'
     | '/_authenticated/snap'
     | '/_authenticated/chat/$userId'
   fileRoutesById: FileRoutesById
@@ -134,11 +183,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chat': {
       id: '/_authenticated/chat'
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/create': {
+      id: '/_authenticated/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof AuthenticatedCreateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/feed': {
@@ -153,6 +216,13 @@ declare module '@tanstack/react-router' {
       path: '/reels'
       fullPath: '/reels'
       preLoaderRoute: typeof AuthenticatedReelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/snap': {
@@ -184,16 +254,22 @@ const AuthenticatedChatRouteWithChildren =
   AuthenticatedChatRoute._addFileChildren(AuthenticatedChatRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRouteWithChildren
+  AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSnapRoute: typeof AuthenticatedSnapRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedChatRoute: AuthenticatedChatRouteWithChildren,
+  AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
+  AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSnapRoute: AuthenticatedSnapRoute,
 }
 
