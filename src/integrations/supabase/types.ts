@@ -32,6 +32,51 @@ export type Database = {
         }
         Relationships: []
       }
+      calls: {
+        Row: {
+          callee_id: string
+          caller_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          callee_id: string
+          caller_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          callee_id?: string
+          caller_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_callee_profile_fkey"
+            columns: ["callee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_caller_profile_fkey"
+            columns: ["caller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           body: string
@@ -137,8 +182,9 @@ export type Database = {
         Row: {
           body: string
           created_at: string
-          expires_at: string
+          expires_at: string | null
           id: string
+          media_url: string | null
           read_at: string | null
           recipient_id: string
           sender_id: string
@@ -146,8 +192,9 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
-          expires_at?: string
+          expires_at?: string | null
           id?: string
+          media_url?: string | null
           read_at?: string | null
           recipient_id: string
           sender_id: string
@@ -155,8 +202,9 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
-          expires_at?: string
+          expires_at?: string | null
           id?: string
+          media_url?: string | null
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
@@ -174,6 +222,51 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_profile_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -258,6 +351,7 @@ export type Database = {
           id: string
           is_private: boolean
           snap_score: number
+          status: string | null
           username: string
         }
         Insert: {
@@ -268,6 +362,7 @@ export type Database = {
           id: string
           is_private?: boolean
           snap_score?: number
+          status?: string | null
           username: string
         }
         Update: {
@@ -278,6 +373,7 @@ export type Database = {
           id?: string
           is_private?: boolean
           snap_score?: number
+          status?: string | null
           username?: string
         }
         Relationships: []
@@ -456,6 +552,33 @@ export type Database = {
           last_snap_at?: string
           user_a?: string
           user_b?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          user_id?: string
         }
         Relationships: []
       }
