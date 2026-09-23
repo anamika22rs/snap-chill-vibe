@@ -6,6 +6,7 @@ export type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  status: string | null;
   is_private: boolean;
   snap_score: number;
   created_at: string;
@@ -15,7 +16,7 @@ export type Post = {
   id: string;
   user_id: string;
   kind: string;
-  media_url: string;
+  media_url: string | null;
   caption: string | null;
   location: string | null;
   created_at: string;
