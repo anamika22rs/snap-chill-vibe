@@ -1,120 +1,167 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Timer } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
-import { fetchFriends } from "@/lib/queries";
 import { timeAgo, type Profile } from "@/lib/chill";
 
 export const Route = createFileRoute("/_authenticated/chat")({
   head: () => ({
     meta: [
-      { title: "Chat — ChillSnap" },
-      { name: "description", content: "Disappearing chats that clear themselves after 24 hours." },
-      { property: "og:title", content: "Chat — ChillSnap" },
-      { property: "og:description", content: "Messages that vanish after a day." },
+      { title: "Chats — ChillSnap" },
+      { name: "description", content: "Your private one-to-one ChillSnap conversations." },
+      { property: "og:title", content: "Chats — ChillSnap" },
+      { property: "og:description", content: "Private one-to-one conversations." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ChatList,
 });
 
+type Row = {
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
+  sender: Profile;
+  recipient: Profile;
+};
+
 function ChatList() {
   const { data: me } = useMe();
   const meId = me?.user.id;
+  const qc = useQueryClient();
+  const [q, setQ] = useState("");
 
   const chats = useQuery({
     queryKey: ["chats", meId],
     enabled: !!meId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .select(
-          "*, sender:profiles!messages_sender_fkey(*), recipient:profiles!messages_recipient_fkey(*)",
+          "sender_id, recipient_id, body, created_at, read_at, sender:profiles!messages_sender_fkey(*), recipient:profiles!messages_recipient_fkey(*)",
         )
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
-
-      const seen = new Map<
-        string,
-        { other: Profile; body: string; created_at: string; mine: boolean }
-      >();
-      for (const m of (data ?? []) as Array<{
-        sender_id: string;
-        body: string;
-        created_at: string;
-        sender: Profile;
-        recipient: Profile;
-      }>) {
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const seen = new Map<string, { other: Profile; body: string; created_at: string; mine: boolean; unread: number }>();
+      for (const m of (data ?? []) as unknown as Row[]) {
         const mine = m.sender_id === meId;
         const other = mine ? m.recipient : m.sender;
-        if (!other || seen.has(other.id)) continue;
-        seen.set(other.id, { other, body: m.body, created_at: m.created_at, mine });
+        if (!other) continue;
+        const entry = seen.get(other.id) ?? { other, body: m.body, created_at: m.created_at, mine, unread: 0 };
+        if (!mine && !m.read_at) entry.unread++;
+        seen.set(other.id, entry);
       }
       return [...seen.values()];
     },
   });
 
-  const friends = useQuery({
-    queryKey: ["friends", meId],
-    enabled: !!meId,
-    queryFn: () => fetchFriends(meId!),
-  });
+  useEffect(() => {
+    if (!meId) return;
+    const ch = supabase
+      .channel(`chat-list-${meId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () =>
+        qc.invalidateQueries({ queryKey: ["chats", meId] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [meId, qc]);
 
-  const openIds = new Set(chats.data?.map((c) => c.other.id));
+  const people = useQuery({
+    queryKey: ["chat-search", q],
+    enabled: !!meId && q.trim().length > 0,
+    queryFn: async () => {
+      const term = q.trim().replace(/[%,()]/g, "");
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
+        .neq("id", meId!)
+        .limit(20);
+      return (data ?? []) as Profile[];
+    },
+  });
 
   return (
     <>
-      <header className="sticky top-0 z-30 glass flex items-center justify-between px-4 py-3">
-        <h1 className="font-display text-2xl font-bold text-gradient">Chat</h1>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Timer className="h-3.5 w-3.5" /> clears in 24h
-        </span>
+      <header className="sticky top-0 z-30 glass px-4 py-3">
+        <h1 className="font-display text-2xl font-bold text-gradient">Chats</h1>
+        <label className="mt-3 flex items-center gap-2 rounded-full bg-card px-4 py-2.5">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Find someone to message…"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
       </header>
 
-      <div className="space-y-2 px-4 py-4">
-        {chats.data?.map((c) => (
-          <Link
-            key={c.other.id}
-            to="/chat/$userId"
-            params={{ userId: c.other.id }}
-            className="flex items-center gap-3 rounded-3xl bg-card px-4 py-3"
-          >
-            <Ava profile={c.other} size={46} ring />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">@{c.other.username}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {c.mine ? "You: " : ""}
-                {c.body}
-              </p>
-            </div>
-            <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
-          </Link>
-        ))}
-      </div>
-
-      <section className="px-4">
-        <h2 className="mb-2 font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
-          Start a chat
-        </h2>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {friends.data
-            ?.filter((f) => !openIds.has(f.id))
-            .map((f) => (
-              <Link
-                key={f.id}
-                to="/chat/$userId"
-                params={{ userId: f.id }}
-                className="flex w-16 flex-col items-center gap-1.5"
-              >
-                <Ava profile={f} size={56} />
-                <span className="w-16 truncate text-center text-[11px] text-muted-foreground">
-                  {f.username}
-                </span>
-              </Link>
-            ))}
+      {q.trim() ? (
+        <div className="space-y-2 px-4 py-4">
+          {people.isLoading && <p className="text-center text-sm text-muted-foreground">Searching…</p>}
+          {people.data?.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground">No users match “{q}”.</p>
+          )}
+          {people.data?.map((p) => (
+            <Link
+              key={p.id}
+              to="/chat/$userId"
+              params={{ userId: p.id }}
+              className="flex items-center gap-3 rounded-3xl bg-card px-4 py-3"
+            >
+              <Ava profile={p} size={42} />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">@{p.username}</p>
+                {p.status && <p className="truncate text-xs text-muted-foreground">{p.status}</p>}
+              </div>
+            </Link>
+          ))}
         </div>
-      </section>
+      ) : (
+        <div className="space-y-2 px-4 py-4">
+          {chats.isLoading && <p className="py-10 text-center text-sm text-muted-foreground">Loading chats…</p>}
+          {chats.isError && <p className="py-10 text-center text-sm text-destructive">Couldn't load chats.</p>}
+          {chats.data?.length === 0 && (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              No conversations yet. Search for someone above to start one.
+            </p>
+          )}
+          {chats.data?.map((c) => (
+            <Link
+              key={c.other.id}
+              to="/chat/$userId"
+              params={{ userId: c.other.id }}
+              className="flex items-center gap-3 rounded-3xl bg-card px-4 py-3"
+            >
+              <Ava profile={c.other} size={46} ring={c.unread > 0} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">@{c.other.username}</p>
+                <p className={`truncate text-xs ${c.unread ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                  {c.mine ? "You: " : ""}
+                  {c.body}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
+                {c.unread > 0 && (
+                  <span className="gradient-chill flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {c.unread > 9 ? "9+" : c.unread}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </>
   );
 }

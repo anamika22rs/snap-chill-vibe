@@ -110,14 +110,16 @@ function ActivityPage() {
   }, [meId, notifs.data, qc]);
 
   const icon = (type: string) =>
-    type === "like" ? Heart : type === "comment" ? MessageCircle : UserPlus;
+    type === "like" ? Heart : type === "comment" || type === "message" ? MessageCircle : UserPlus;
 
   const text = (type: string) =>
     type === "like"
       ? "liked your post"
       : type === "comment"
         ? "commented on your post"
-        : type === "follow_request"
+        : type === "message"
+          ? "sent you a message"
+          : type === "follow_request"
           ? "asked to follow you"
           : "started following you";
 

@@ -171,7 +171,11 @@ export function PostCard({ post, meId }: { post: FeedPost; meId: string }) {
         className="relative block w-full"
         aria-label="Double tap to like"
       >
-        <Media path={post.media_url} className="aspect-square w-full object-cover" />
+        {post.media_url ? (
+          <Media path={post.media_url} className="aspect-square w-full object-cover" />
+        ) : (
+          <p className="px-4 py-6 text-left text-lg">{post.caption}</p>
+        )}
         {burst && (
           <Heart className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 animate-ping fill-primary text-primary" />
         )}
