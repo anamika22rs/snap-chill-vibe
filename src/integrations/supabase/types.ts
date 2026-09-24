@@ -77,6 +77,39 @@ export type Database = {
           },
         ]
       }
+      close_friends: {
+        Row: {
+          created_at: string
+          friend_id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "close_friends_friend_id_fkey"
+            columns: ["friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "close_friends_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           body: string
@@ -507,6 +540,7 @@ export type Database = {
           id: string
           media_url: string
           user_id: string
+          visibility: string
         }
         Insert: {
           caption?: string | null
@@ -515,6 +549,7 @@ export type Database = {
           id?: string
           media_url: string
           user_id: string
+          visibility?: string
         }
         Update: {
           caption?: string | null
@@ -523,11 +558,42 @@ export type Database = {
           id?: string
           media_url?: string
           user_id?: string
+          visibility?: string
         }
         Relationships: [
           {
             foreignKeyName: "stories_author_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_viewers: {
+        Row: {
+          story_id: string
+          viewer_id: string
+        }
+        Insert: {
+          story_id: string
+          viewer_id: string
+        }
+        Update: {
+          story_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_viewers_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -587,8 +653,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_story: {
+        Args: { _owner: string; _story: string; _vis: string }
+        Returns: boolean
+      }
       can_view_user: { Args: { target: string }; Returns: boolean }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
+      owns_story: { Args: { _story: string }; Returns: boolean }
+      username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
