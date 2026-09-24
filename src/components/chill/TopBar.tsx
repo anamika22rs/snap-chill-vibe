@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Camera, Clapperboard, MapPin, MessageCircle } from "lucide-react";
+import { Camera, Clapperboard, MessageCircle } from "lucide-react";
 
 export function TopBar({ title = "ChillSnap" }: { title?: string }) {
   return (
