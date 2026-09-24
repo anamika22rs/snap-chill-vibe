@@ -1,19 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, Timer } from "lucide-react";
+import { ArrowLeft, Phone, Send } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
-import { timeLeft, type Profile } from "@/lib/chill";
+import { useCall } from "@/components/chill/CallProvider";
+import { timeAgo, type Profile } from "@/lib/chill";
 
 export const Route = createFileRoute("/_authenticated/chat/$userId")({
   head: () => ({
     meta: [
-      { title: "Chat — ChillSnap" },
-      { name: "description", content: "A disappearing ChillSnap conversation." },
-      { property: "og:title", content: "Chat — ChillSnap" },
-      { property: "og:description", content: "A disappearing ChillSnap conversation." },
+      { title: "Conversation — ChillSnap" },
+      { name: "description", content: "A private one-to-one ChillSnap conversation." },
+      { property: "og:title", content: "Conversation — ChillSnap" },
+      { property: "og:description", content: "A private one-to-one ChillSnap conversation." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Thread,
@@ -25,7 +29,7 @@ type Message = {
   recipient_id: string;
   body: string;
   created_at: string;
-  expires_at: string;
+  read_at: string | null;
 };
 
 function Thread() {
@@ -33,6 +37,7 @@ function Thread() {
   const { data: me } = useMe();
   const meId = me?.user.id;
   const qc = useQueryClient();
+  const { startCall } = useCall();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -48,24 +53,24 @@ function Thread() {
     queryKey: ["thread", meId, userId],
     enabled: !!meId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
-        .select("*")
-        .gt("expires_at", new Date().toISOString())
+        .select("id, sender_id, recipient_id, body, created_at, read_at")
         .or(
           `and(sender_id.eq.${meId},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${meId})`,
         )
         .order("created_at");
+      if (error) throw error;
       return (data ?? []) as Message[];
     },
   });
 
   useEffect(() => {
+    if (!meId) return;
     const channel = supabase
-      .channel(`thread-${userId}`)
+      .channel(`thread-${meId}-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
         qc.invalidateQueries({ queryKey: ["thread", meId, userId] });
-        qc.invalidateQueries({ queryKey: ["chats", meId] });
       })
       .subscribe();
     return () => {
@@ -73,21 +78,38 @@ function Thread() {
     };
   }, [qc, meId, userId]);
 
+  // Mark incoming messages read
+  const unreadCount = messages.data?.filter((m) => m.recipient_id === meId && !m.read_at).length ?? 0;
+  useEffect(() => {
+    if (!meId || unreadCount === 0) return;
+    void supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("recipient_id", meId)
+      .eq("sender_id", userId)
+      .is("read_at", null)
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ["chats", meId] });
+        qc.invalidateQueries({ queryKey: ["unread-chats", meId] });
+      });
+  }, [meId, userId, unreadCount, qc]);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.data?.length]);
 
   const send = useMutation({
-    mutationFn: async () => {
-      const body = draft.trim();
-      if (!body || !meId) return;
-      setDraft("");
+    mutationFn: async (body: string) => {
       const { error } = await supabase
         .from("messages")
-        .insert({ sender_id: meId, recipient_id: userId, body });
+        .insert({ sender_id: meId!, recipient_id: userId, body });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["thread", meId, userId] }),
+    onError: (_e, body) => {
+      setDraft(body);
+      toast.error("Message not sent — you may be blocked or offline");
+    },
   });
 
   return (
@@ -96,22 +118,32 @@ function Thread() {
         <Link to="/chat" aria-label="Back to chats">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <Link to="/u/$username" params={{ username: other.data?.username ?? "" }}>
-          <Ava profile={other.data} size={38} ring />
-        </Link>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">@{other.data?.username ?? "…"}</p>
-          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <Timer className="h-3 w-3" /> messages disappear in 24h
-          </p>
+        {other.data && (
+          <Link to="/u/$username" params={{ username: other.data.username }}>
+            <Ava profile={other.data} size={38} ring />
+          </Link>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">@{other.data?.username ?? "…"}</p>
+          {other.data?.status && (
+            <p className="truncate text-[11px] text-muted-foreground">{other.data.status}</p>
+          )}
         </div>
+        <button
+          onClick={() => other.data && startCall(other.data)}
+          disabled={!other.data}
+          aria-label="Voice call"
+          className="gradient-chill flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50"
+        >
+          <Phone className="h-4 w-4" />
+        </button>
       </header>
 
       <div className="flex-1 space-y-2 px-4 py-4">
+        {messages.isLoading && <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>}
+        {messages.isError && <p className="py-10 text-center text-sm text-destructive">Couldn't load messages.</p>}
         {messages.data?.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            Say something — it vanishes tomorrow anyway.
-          </p>
+          <p className="py-10 text-center text-sm text-muted-foreground">Say hi 👋</p>
         )}
         {messages.data?.map((m) => {
           const mine = m.sender_id === meId;
@@ -124,8 +156,11 @@ function Thread() {
                     : "max-w-[78%] rounded-3xl rounded-bl-md bg-card px-4 py-2.5 text-sm"
                 }
               >
-                {m.body}
-                <span className="mt-1 block text-[10px] opacity-70">{timeLeft(m.expires_at)}</span>
+                <span className="whitespace-pre-wrap break-words">{m.body}</span>
+                <span className="mt-1 block text-[10px] opacity-70">
+                  {timeAgo(m.created_at)}
+                  {mine && (m.read_at ? " · Seen" : " · Sent")}
+                </span>
               </div>
             </div>
           );
@@ -136,19 +171,24 @@ function Thread() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          send.mutate();
+          const body = draft.trim();
+          if (!body || !meId) return;
+          setDraft("");
+          send.mutate(body);
         }}
         className="sticky bottom-24 mx-4 flex gap-2"
       >
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Send a disappearing message…"
+          placeholder="Message…"
+          maxLength={2000}
           className="glass flex-1 rounded-full px-5 py-3 text-sm outline-none placeholder:text-muted-foreground"
         />
         <button
           type="submit"
-          className="gradient-chill flex h-12 w-12 items-center justify-center rounded-full text-primary-foreground"
+          disabled={send.isPending || !draft.trim()}
+          className="gradient-chill flex h-12 w-12 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50"
           aria-label="Send"
         >
           <Send className="h-5 w-5" />

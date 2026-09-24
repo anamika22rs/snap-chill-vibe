@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { normalizeUsername, usernameToLogin, USERNAME_RE } from "@/lib/usernameAuth";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -12,25 +12,28 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in to ChillSnap" },
-      { name: "description", content: "Create your ChillSnap account or sign back in." },
+      { name: "description", content: "Create your ChillSnap account with a username or sign back in." },
       { property: "og:title", content: "Sign in to ChillSnap" },
-      { property: "og:description", content: "Create your ChillSnap account or sign back in." },
+      { property: "og:description", content: "Create your ChillSnap account with a username or sign back in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
 });
 
+const field =
+  "w-full rounded-2xl bg-card px-5 py-4 text-sm outline-none ring-primary/50 placeholder:text-muted-foreground focus:ring-2";
+
 function AuthPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">(
-    search.mode === "signin" ? "signin" : "signup",
-  );
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"signin" | "signup">(search.mode === "signin" ? "signin" : "signup");
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,55 +43,37 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const uname = normalizeUsername(username);
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!USERNAME_RE.test(uname))
+          throw new Error("Username: 3–20 letters, numbers, dots or underscores");
+        if (password.length < 8) throw new Error("Password must be at least 8 characters");
+        if (password !== confirm) throw new Error("Passwords don't match");
+        const { data: free } = await supabase.rpc("username_available", { _username: uname });
+        if (free === false) throw new Error("That username is taken");
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: usernameToLogin(uname),
           password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { username: username.trim(), display_name: username.trim() },
-          },
+          options: { data: { username: uname, status: status.trim() || null } },
         });
         if (error) throw error;
-        if (data.session) navigate({ to: "/feed", replace: true });
-        else setSent(true);
+        if (!data.session) throw new Error("Couldn't start your session, try signing in");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate({ to: "/feed", replace: true });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: usernameToLogin(uname),
+          password,
+        });
+        if (error) throw new Error("Wrong username or password");
       }
+      navigate({ to: "/feed", replace: true });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(/already registered/i.test(msg) ? "That username is taken" : msg);
     } finally {
       setBusy(false);
     }
-  }
-
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/feed", replace: true });
-  }
-
-  if (sent) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="glass max-w-sm rounded-3xl p-8 text-center">
-          <h1 className="font-display text-2xl font-bold text-gradient">Check your inbox</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            We sent a confirmation link to {email}. Tap it to start chilling.
-          </p>
-        </div>
-      </main>
-    );
   }
 
   return (
@@ -99,33 +84,45 @@ function AuthPage() {
       </p>
 
       <form onSubmit={submit} className="mt-8 space-y-3">
-        {mode === "signup" && (
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            required
-            minLength={3}
-            className="h-13 w-full rounded-2xl bg-card px-5 py-4 text-sm outline-none ring-primary/50 placeholder:text-muted-foreground focus:ring-2"
-          />
-        )}
         <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+          autoComplete="username"
+          autoCapitalize="none"
           required
-          className="w-full rounded-2xl bg-card px-5 py-4 text-sm outline-none ring-primary/50 placeholder:text-muted-foreground focus:ring-2"
+          minLength={3}
+          className={field}
         />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
           required
-          minLength={6}
-          className="w-full rounded-2xl bg-card px-5 py-4 text-sm outline-none ring-primary/50 placeholder:text-muted-foreground focus:ring-2"
+          className={field}
         />
+        {mode === "signup" && (
+          <>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Confirm password"
+              autoComplete="new-password"
+              required
+              className={field}
+            />
+            <input
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              placeholder="Status (e.g. chilling ✨)"
+              maxLength={80}
+              className={field}
+            />
+          </>
+        )}
         <button
           type="submit"
           disabled={busy}
@@ -134,13 +131,6 @@ function AuthPage() {
           {busy ? "One sec…" : mode === "signup" ? "Create account" : "Sign in"}
         </button>
       </form>
-
-      <button
-        onClick={google}
-        className="mt-3 flex h-13 w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-4 text-sm font-semibold"
-      >
-        Continue with Google
-      </button>
 
       <button
         onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
