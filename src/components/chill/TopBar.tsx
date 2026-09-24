@@ -12,9 +12,6 @@ export function TopBar({ title = "ChillSnap" }: { title?: string }) {
         <Link to="/snap" aria-label="Snaps" className="rounded-full p-2 text-foreground">
           <Camera className="h-5 w-5" />
         </Link>
-        <Link to="/map" aria-label="Snap map" className="rounded-full p-2 text-foreground">
-          <MapPin className="h-5 w-5" />
-        </Link>
         <Link to="/chat" aria-label="Chats" className="rounded-full p-2 text-foreground">
           <MessageCircle className="h-5 w-5" />
         </Link>
