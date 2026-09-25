@@ -7,7 +7,7 @@ import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import { timeAgo, type Profile } from "@/lib/chill";
 
-export const Route = createFileRoute("/_authenticated/chat")({
+export const Route = createFileRoute("/_authenticated/chat/")({
   head: () => ({
     meta: [
       { title: "Chats — ChillSnap" },
