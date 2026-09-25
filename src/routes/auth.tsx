@@ -6,8 +6,8 @@ import { normalizeUsername, usernameToLogin, USERNAME_RE } from "@/lib/usernameA
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => ({
-    mode: search["mode"] === "signin" ? "signin" : undefined,
+  validateSearch: (search: Record<string, unknown>): { mode?: "signin" } => ({
+    ...(search["mode"] === "signin" ? { mode: "signin" as const } : {}),
   }),
   head: () => ({
     meta: [

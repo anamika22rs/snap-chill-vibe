@@ -6,11 +6,11 @@ import { useMe } from "@/hooks/useMe";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { to: "/feed", icon: Home, label: "Home" },
-  { to: "/search", icon: Search, label: "Search" },
-  { to: "/create", icon: PlusSquare, label: "Create", center: true },
-  { to: "/activity", icon: Bell, label: "Activity" },
-  { to: "/profile", icon: User, label: "Profile" },
+  { to: "/feed", icon: Home, label: "Home", center: false as boolean },
+  { to: "/search", icon: Search, label: "Search", center: false as boolean },
+  { to: "/create", icon: PlusSquare, label: "Create", center: true as boolean },
+  { to: "/activity", icon: Bell, label: "Activity", center: false as boolean },
+  { to: "/profile", icon: User, label: "Profile", center: false as boolean },
 ] as const;
 
 export function BottomNav() {
