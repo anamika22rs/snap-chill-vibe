@@ -8,7 +8,7 @@ export function Ava({
   ring = false,
   className,
 }: {
-  profile?: Pick<Profile, "username" | "avatar_url" | "display_name"> | null;
+  profile?: Pick<Profile, "username" | "avatar_url" | "display_name"> | null | undefined;
   size?: number;
   ring?: boolean;
   className?: string;
