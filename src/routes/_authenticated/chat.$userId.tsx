@@ -115,7 +115,7 @@ function Thread() {
   return (
     <div className="flex min-h-[calc(100vh-7rem)] flex-col">
       <header className="sticky top-0 z-30 glass flex items-center gap-3 px-4 py-3">
-        <Link to="/chat" aria-label="Back to chats">
+        <Link to="/activity" replace aria-label="Back to activity">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         {other.data && (
