@@ -50,6 +50,16 @@ function Thread() {
     },
   });
 
+  const blockedByMe = useQuery({
+    queryKey: ["blocked", meId, userId],
+    enabled: !!meId,
+    queryFn: async () => {
+      const { data } = await supabase.from("blocks").select("blocked_id").eq("blocker_id", meId!).eq("blocked_id", userId).maybeSingle();
+      return !!data;
+    },
+  });
+  const isBlocked = blockedByMe.data === true || (other.isSuccess && !other.data);
+
   const messages = useQuery({
     queryKey: ["thread", meId, userId],
     enabled: !!meId,
@@ -133,7 +143,7 @@ function Thread() {
         </div>
         <button
           onClick={() => other.data && startCall(other.data)}
-          disabled={!other.data}
+          disabled={!other.data || isBlocked}
           aria-label="Voice call"
           className="gradient-chill flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50"
         >
@@ -145,7 +155,9 @@ function Thread() {
         {messages.isLoading && <p className="py-10 text-center text-sm text-muted-foreground">Loading…</p>}
         {messages.isError && <p className="py-10 text-center text-sm text-destructive">Couldn't load messages.</p>}
         {messages.data?.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">Say hi 👋</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            No messages yet. Say hi 👋
+          </p>
         )}
         {messages.data?.map((m) => {
           const mine = m.sender_id === meId;
@@ -170,6 +182,13 @@ function Thread() {
         <div ref={endRef} />
       </div>
 
+      {isBlocked ? (
+        <p className="sticky bottom-24 mx-4 rounded-3xl bg-card px-4 py-3 text-center text-sm text-muted-foreground">
+          {blockedByMe.data
+            ? "You blocked this account. Unblock them in Settings → Blocked accounts to chat."
+            : "You can't message this account."}
+        </p>
+      ) : (
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -196,6 +215,7 @@ function Thread() {
           <Send className="h-5 w-5" />
         </button>
       </form>
+      )}
     </div>
   );
 }
