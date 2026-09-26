@@ -1,3 +1,4 @@
+import { useBack } from "@/hooks/useBack";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -88,12 +89,13 @@ function HelpPage() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Couldn't send that"),
   });
 
+  const back = useBack("/settings");
   return (
     <>
       <header className="sticky top-0 z-30 glass flex items-center gap-3 px-4 py-3">
-        <Link to="/settings" aria-label="Back to settings">
+        <button onClick={back} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <h1 className="font-display text-xl font-bold">Help &amp; Support</h1>
       </header>
 

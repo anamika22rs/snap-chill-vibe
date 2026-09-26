@@ -189,16 +189,19 @@ export type Database = {
         Row: {
           created_at: string
           post_id: string
+          reason: string
           user_id: string
         }
         Insert: {
           created_at?: string
           post_id: string
+          reason?: string
           user_id: string
         }
         Update: {
           created_at?: string
           post_id?: string
+          reason?: string
           user_id?: string
         }
         Relationships: [
@@ -659,6 +662,16 @@ export type Database = {
       }
       can_view_user: { Args: { target: string }; Returns: boolean }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
+      my_blocked_accounts: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          blocked_at: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
       owns_story: { Args: { _story: string }; Returns: boolean }
       username_available: { Args: { _username: string }; Returns: boolean }
     }
