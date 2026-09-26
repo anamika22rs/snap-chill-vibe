@@ -30,6 +30,26 @@ function UserPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { startCall } = useCall();
+  const back = useBack("/search");
+  const myBlocks = useQuery({
+    queryKey: ["blocks", meId],
+    enabled: !!meId,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("my_blocked_accounts" as never);
+      return (data ?? []) as unknown as Profile[];
+    },
+  });
+  const unblockHidden = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("blocks").delete().eq("blocker_id", meId!).eq("blocked_id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`Unblocked @${username}`);
+      qc.invalidateQueries();
+    },
+    onError: () => toast.error("Couldn't unblock"),
+  });
 
   const profile = useQuery({
     queryKey: ["profile-by-username", username],
@@ -111,6 +131,27 @@ function UserPage() {
 
   if (profile.isLoading) {
     return <p className="py-20 text-center text-sm text-muted-foreground">Loading profile…</p>;
+  }
+  const blockedByMe = !target
+    ? myBlocks.data?.find((p) => p.username.toLowerCase() === username.toLowerCase())
+    : undefined;
+  if (!target && blockedByMe) {
+    return (
+      <div className="px-4 py-20 text-center">
+        <Ava profile={blockedByMe} size={84} />
+        <p className="mt-4 font-display text-lg font-bold">@{blockedByMe.username}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          You blocked this account. Their profile and posts are hidden.
+        </p>
+        <button
+          onClick={() => unblockHidden.mutate(blockedByMe.id)}
+          disabled={unblockHidden.isPending}
+          className="gradient-chill mt-5 rounded-full px-6 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
+        >
+          {unblockHidden.isPending ? "Unblocking…" : "Unblock"}
+        </button>
+      </div>
+    );
   }
   if (!target) {
     return (
