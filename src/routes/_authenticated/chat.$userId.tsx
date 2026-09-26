@@ -1,3 +1,4 @@
+import { useBack } from "@/hooks/useBack";
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -112,12 +113,13 @@ function Thread() {
     },
   });
 
+  const back = useBack("/activity");
   return (
     <div className="flex min-h-[calc(100vh-7rem)] flex-col">
       <header className="sticky top-0 z-30 glass flex items-center gap-3 px-4 py-3">
-        <Link to="/activity" replace aria-label="Back to activity">
+        <button onClick={back} aria-label="Back to chats">
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </button>
         {other.data && (
           <Link to="/u/$username" params={{ username: other.data.username }}>
             <Ava profile={other.data} size={38} ring />

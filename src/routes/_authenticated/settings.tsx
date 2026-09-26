@@ -1,6 +1,7 @@
+import { useBack } from "@/hooks/useBack";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, HelpCircle, LogOut, Lock, MapPin, Ban } from "lucide-react";
+import { ArrowLeft, HelpCircle, LogOut, Lock, MapPin, Ban, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
@@ -43,14 +44,9 @@ function SettingsPage() {
     queryKey: ["blocks", meId],
     enabled: !!meId,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("blocks")
-        .select("blocked_id")
-        .eq("blocker_id", meId!);
-      const ids = (data ?? []).map((b) => b.blocked_id);
-      if (ids.length === 0) return [] as Profile[];
-      const { data: people } = await supabase.from("profiles").select("*").in("id", ids);
-      return (people ?? []) as Profile[];
+      const { data, error } = await supabase.rpc("my_blocked_accounts" as never);
+      if (error) throw error;
+      return ((data ?? []) as unknown as Profile[]);
     },
   });
 
@@ -118,12 +114,13 @@ function SettingsPage() {
     navigate({ to: "/auth", replace: true });
   }
 
+  const back = useBack("/profile");
   return (
     <>
       <header className="sticky top-0 z-30 glass flex items-center gap-3 px-4 py-3">
-        <Link to="/profile" aria-label="Back to profile">
+        <button onClick={back} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </button>
         <h1 className="font-display text-xl font-bold">Settings</h1>
       </header>
 
@@ -183,6 +180,12 @@ function SettingsPage() {
 
         <section className="space-y-2">
           <Link
+            to="/settings/hidden"
+            className="flex items-center gap-3 rounded-3xl bg-card px-4 py-4 text-sm font-semibold"
+          >
+            <EyeOff className="h-4 w-4 text-primary" /> Hidden posts
+          </Link>
+          <Link
             to="/help"
             className="flex items-center gap-3 rounded-3xl bg-card px-4 py-4 text-sm font-semibold"
           >
@@ -195,7 +198,7 @@ function SettingsPage() {
             <LogOut className="h-4 w-4" /> Log out
           </button>
           <p className="px-2 pt-2 text-xs text-muted-foreground">
-            Signed in as {me?.user.email ?? "your account"}
+            Signed in as @{me?.profile?.username ?? "you"}
           </p>
         </section>
       </div>

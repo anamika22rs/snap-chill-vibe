@@ -1,3 +1,4 @@
+import { useBack } from "@/hooks/useBack";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Ban, Flag, Lock, MessageCircle, Phone } from "lucide-react";
@@ -131,7 +132,7 @@ function UserPage() {
   return (
     <>
       <header className="sticky top-0 z-30 glass flex items-center gap-3 px-4 py-3">
-        <button onClick={() => navigate({ to: "/search" })} aria-label="Back">
+        <button onClick={back} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <p className="font-display text-lg font-bold">@{target.username}</p>
