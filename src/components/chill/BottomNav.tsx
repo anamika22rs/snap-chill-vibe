@@ -19,14 +19,14 @@ export function BottomNav() {
   const meId = me?.user.id;
 
   const unread = useQuery({
-    queryKey: ["unread-activity", meId],
+    queryKey: ["unread-chats", meId],
     enabled: !!meId,
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
     queryFn: async () => {
       const { count } = await supabase
-        .from("notifications")
+        .from("messages")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", meId!)
+        .eq("recipient_id", meId!)
         .is("read_at", null);
       return count ?? 0;
     },
