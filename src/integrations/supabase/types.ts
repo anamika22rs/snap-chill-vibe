@@ -214,10 +214,38 @@ export type Database = {
           },
         ]
       }
+      message_hides: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_hides_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           expires_at: string | null
           id: string
           media_url: string | null
@@ -228,6 +256,8 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           expires_at?: string | null
           id?: string
           media_url?: string | null
@@ -238,6 +268,8 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           expires_at?: string | null
           id?: string
           media_url?: string | null
@@ -385,6 +417,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_hidden: boolean
           is_private: boolean
           snap_score: number
           status: string | null
@@ -396,6 +429,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_hidden?: boolean
           is_private?: boolean
           snap_score?: number
           status?: string | null
@@ -407,6 +441,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_hidden?: boolean
           is_private?: boolean
           snap_score?: number
           status?: string | null
@@ -661,6 +696,7 @@ export type Database = {
         Returns: boolean
       }
       can_view_user: { Args: { target: string }; Returns: boolean }
+      has_chat_with: { Args: { target: string }; Returns: boolean }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       my_blocked_accounts: {
         Args: never
