@@ -19,10 +19,10 @@ import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSnapRouteImport } from './routes/_authenticated/snap'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatUserIdRouteImport } from './routes/_authenticated/chat.$userId'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
 import { Route as AuthenticatedSettingsHiddenRouteImport } from './routes/_authenticated/settings.hidden'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 
@@ -75,11 +75,6 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSnapRoute = AuthenticatedSnapRouteImport.update({
   id: '/snap',
   path: '/snap',
@@ -95,11 +90,17 @@ const AuthenticatedChatUserIdRoute = AuthenticatedChatUserIdRouteImport.update({
   path: '/chat/$userId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsHiddenRoute =
   AuthenticatedSettingsHiddenRouteImport.update({
-    id: '/hidden',
-    path: '/hidden',
-    getParentRoute: () => AuthenticatedSettingsRoute,
+    id: '/settings/hidden',
+    path: '/settings/hidden',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
@@ -117,12 +118,12 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
-  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
   '/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,12 +135,12 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
-  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
   '/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,12 +154,12 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/snap': typeof AuthenticatedSnapRoute
   '/_authenticated/chat/$userId': typeof AuthenticatedChatUserIdRoute
   '/_authenticated/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -172,12 +173,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reels'
     | '/search'
-    | '/settings'
     | '/snap'
     | '/chat/$userId'
     | '/settings/hidden'
     | '/u/$username'
     | '/chat/'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,12 +190,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reels'
     | '/search'
-    | '/settings'
     | '/snap'
     | '/chat/$userId'
     | '/settings/hidden'
     | '/u/$username'
     | '/chat'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -207,12 +208,12 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/reels'
     | '/_authenticated/search'
-    | '/_authenticated/settings'
     | '/_authenticated/snap'
     | '/_authenticated/chat/$userId'
     | '/_authenticated/settings/hidden'
     | '/_authenticated/u/$username'
     | '/_authenticated/chat/'
+    | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -293,13 +294,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/snap': {
       id: '/_authenticated/snap'
       path: '/snap'
@@ -321,12 +315,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/hidden': {
       id: '/_authenticated/settings/hidden'
-      path: '/hidden'
+      path: '/settings/hidden'
       fullPath: '/settings/hidden'
       preLoaderRoute: typeof AuthenticatedSettingsHiddenRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
@@ -338,19 +339,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedSettingsRouteChildren {
-  AuthenticatedSettingsHiddenRoute: typeof AuthenticatedSettingsHiddenRoute
-}
-
-const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
-  AuthenticatedSettingsHiddenRoute: AuthenticatedSettingsHiddenRoute,
-}
-
-const AuthenticatedSettingsRouteWithChildren =
-  AuthenticatedSettingsRoute._addFileChildren(
-    AuthenticatedSettingsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
@@ -359,11 +347,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSnapRoute: typeof AuthenticatedSnapRoute
   AuthenticatedChatUserIdRoute: typeof AuthenticatedChatUserIdRoute
+  AuthenticatedSettingsHiddenRoute: typeof AuthenticatedSettingsHiddenRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -374,11 +363,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSnapRoute: AuthenticatedSnapRoute,
   AuthenticatedChatUserIdRoute: AuthenticatedChatUserIdRoute,
+  AuthenticatedSettingsHiddenRoute: AuthenticatedSettingsHiddenRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
