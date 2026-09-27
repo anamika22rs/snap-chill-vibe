@@ -23,6 +23,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSnapRouteImport } from './routes/_authenticated/snap'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatUserIdRouteImport } from './routes/_authenticated/chat.$userId'
+import { Route as AuthenticatedSettingsHiddenRouteImport } from './routes/_authenticated/settings.hidden'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 
 const IndexRoute = IndexRouteImport.update({
@@ -94,6 +95,12 @@ const AuthenticatedChatUserIdRoute = AuthenticatedChatUserIdRouteImport.update({
   path: '/chat/$userId',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsHiddenRoute =
+  AuthenticatedSettingsHiddenRouteImport.update({
+    id: '/hidden',
+    path: '/hidden',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -110,9 +117,10 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
-  '/settings': typeof AuthenticatedSettingsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
+  '/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -126,9 +134,10 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
-  '/settings': typeof AuthenticatedSettingsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/snap': typeof AuthenticatedSnapRoute
   '/chat/$userId': typeof AuthenticatedChatUserIdRoute
+  '/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
   '/chat': typeof AuthenticatedChatIndexRoute
 }
@@ -144,9 +153,10 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/snap': typeof AuthenticatedSnapRoute
   '/_authenticated/chat/$userId': typeof AuthenticatedChatUserIdRoute
+  '/_authenticated/settings/hidden': typeof AuthenticatedSettingsHiddenRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
 }
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/snap'
     | '/chat/$userId'
+    | '/settings/hidden'
     | '/u/$username'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/snap'
     | '/chat/$userId'
+    | '/settings/hidden'
     | '/u/$username'
     | '/chat'
   id:
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/snap'
     | '/_authenticated/chat/$userId'
+    | '/_authenticated/settings/hidden'
     | '/_authenticated/u/$username'
     | '/_authenticated/chat/'
   fileRoutesById: FileRoutesById
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/hidden': {
+      id: '/_authenticated/settings/hidden'
+      path: '/hidden'
+      fullPath: '/settings/hidden'
+      preLoaderRoute: typeof AuthenticatedSettingsHiddenRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
       path: '/u/$username'
@@ -318,6 +338,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsHiddenRoute: typeof AuthenticatedSettingsHiddenRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsHiddenRoute: AuthenticatedSettingsHiddenRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
@@ -326,7 +359,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSnapRoute: typeof AuthenticatedSnapRoute
   AuthenticatedChatUserIdRoute: typeof AuthenticatedChatUserIdRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
@@ -341,7 +374,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSnapRoute: AuthenticatedSnapRoute,
   AuthenticatedChatUserIdRoute: AuthenticatedChatUserIdRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,

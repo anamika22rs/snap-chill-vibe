@@ -8,7 +8,7 @@ import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import type { Profile } from "@/lib/chill";
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
     meta: [
       { title: "Settings — ChillSnap" },
