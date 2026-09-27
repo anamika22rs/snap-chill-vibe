@@ -133,7 +133,7 @@ export function ChatList({ title = "Chats" }: { title?: string }) {
                 <p className="truncate text-sm font-semibold">@{c.other.username}</p>
                 <p className={`truncate text-xs ${c.unread ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                   {c.mine ? "You: " : ""}
-                  {c.body}
+                  {c.body || "Message deleted"}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">

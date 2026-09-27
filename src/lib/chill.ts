@@ -8,6 +8,7 @@ export type Profile = {
   bio: string | null;
   status: string | null;
   is_private: boolean;
+  is_hidden?: boolean;
   snap_score: number;
   created_at: string;
 };
