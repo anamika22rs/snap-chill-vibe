@@ -1,14 +1,13 @@
 import { useBack } from "@/hooks/useBack";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, Flag, Lock, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Ban, Flag, Lock, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import { Media } from "@/components/chill/Media";
 import { FollowButton } from "@/components/chill/FollowButton";
-import { useCall } from "@/components/chill/CallProvider";
 import type { Post, Profile } from "@/lib/chill";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
@@ -29,7 +28,6 @@ function UserPage() {
   const meId = me?.user.id;
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { startCall } = useCall();
   const back = useBack("/search");
   const myBlocks = useQuery({
     queryKey: ["blocks", meId],
@@ -205,12 +203,6 @@ function UserPage() {
           >
             <MessageCircle className="h-4 w-4" /> Message
           </Link>
-          <button
-            onClick={() => void startCall(target)}
-            className="flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2.5 text-xs font-bold"
-          >
-            <Phone className="h-4 w-4" /> Call
-          </button>
           <button
             onClick={() => toggleBlock.mutate()}
             disabled={toggleBlock.isPending}

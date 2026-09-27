@@ -8,7 +8,7 @@ import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import type { Profile } from "@/lib/chill";
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({
     meta: [
       { title: "Settings — ChillSnap" },
@@ -61,6 +61,19 @@ function SettingsPage() {
     },
     onError: () => toast.error("Couldn't change that setting"),
   });
+
+  const setHidden = useMutation({
+    mutationFn: async (value: boolean) => {
+      const { error } = await supabase.from("profiles").update({ is_hidden: value }).eq("id", meId!);
+      if (error) throw error;
+    },
+    onSuccess: (_d, value) => {
+      toast.success(value ? "Your account is hidden" : "Your account is visible again");
+      void qc.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: () => toast.error("Couldn't change that setting"),
+  });
+
 
   const setSharing = useMutation({
     mutationFn: async (value: boolean) => {
@@ -149,6 +162,21 @@ function SettingsPage() {
               on={!!location.data}
               busy={setSharing.isPending}
               onToggle={() => setSharing.mutate(!location.data)}
+            />
+          </Row>
+          <Row
+            icon={<EyeOff className="h-4 w-4 text-primary" />}
+            title={profile?.is_hidden ? "Unhide account" : "Hide account"}
+            subtitle={
+              profile?.is_hidden
+                ? "Your account is hidden. Only people you already chat with can see it."
+                : "Hide from search and discovery. Your chats and data stay saved."
+            }
+          >
+            <Toggle
+              on={!!profile?.is_hidden}
+              busy={setHidden.isPending}
+              onToggle={() => setHidden.mutate(!profile?.is_hidden)}
             />
           </Row>
         </section>
