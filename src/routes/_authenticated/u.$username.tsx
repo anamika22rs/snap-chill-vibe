@@ -1,7 +1,8 @@
 import { useBack } from "@/hooks/useBack";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, Flag, Lock, MessageCircle } from "lucide-react";
+import { ArrowLeft, Ban, EyeOff, Flag, Lock, MessageCircle, MoreVertical } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
@@ -29,6 +30,8 @@ function UserPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const back = useBack("/search");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmMute, setConfirmMute] = useState(false);
   const myBlocks = useQuery({
     queryKey: ["blocks", meId],
     enabled: !!meId,

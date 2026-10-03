@@ -85,12 +85,12 @@ function SearchPage() {
             Couldn't load people. Pull down to try again.
           </p>
         )}
-        {results.data?.length === 0 && (
+        {visible?.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {term ? `No one matches "${term}" yet.` : "No other members yet."}
           </p>
         )}
-        {results.data?.map((p) => (
+        {visible?.map((p) => (
           <div key={p.id} className="flex items-center gap-3 rounded-3xl bg-card px-4 py-3">
             <Link to="/u/$username" params={{ username: p.username }}>
               <Ava profile={p} size={46} ring />
