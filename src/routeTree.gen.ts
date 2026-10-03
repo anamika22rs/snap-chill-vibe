@@ -16,6 +16,7 @@ import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedHiddenAccountsRouteImport } from './routes/_authenticated/hidden-accounts'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
@@ -60,6 +61,12 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHiddenAccountsRoute =
+  AuthenticatedHiddenAccountsRouteImport.update({
+    id: '/hidden-accounts',
+    path: '/hidden-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/help': typeof AuthenticatedHelpRoute
+  '/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/help': typeof AuthenticatedHelpRoute
+  '/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
+  '/_authenticated/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/feed'
     | '/help'
+    | '/hidden-accounts'
     | '/profile'
     | '/reels'
     | '/search'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/feed'
     | '/help'
+    | '/hidden-accounts'
     | '/profile'
     | '/reels'
     | '/search'
@@ -205,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/create'
     | '/_authenticated/feed'
     | '/_authenticated/help'
+    | '/_authenticated/hidden-accounts'
     | '/_authenticated/profile'
     | '/_authenticated/reels'
     | '/_authenticated/search'
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hidden-accounts': {
+      id: '/_authenticated/hidden-accounts'
+      path: '/hidden-accounts'
+      fullPath: '/hidden-accounts'
+      preLoaderRoute: typeof AuthenticatedHiddenAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile': {
@@ -344,6 +364,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
+  AuthenticatedHiddenAccountsRoute: typeof AuthenticatedHiddenAccountsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
@@ -360,6 +381,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
+  AuthenticatedHiddenAccountsRoute: AuthenticatedHiddenAccountsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
