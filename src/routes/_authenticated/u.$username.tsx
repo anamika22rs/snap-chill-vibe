@@ -1,7 +1,8 @@
 import { useBack } from "@/hooks/useBack";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, Flag, Lock, MessageCircle } from "lucide-react";
+import { ArrowLeft, Ban, EyeOff, Flag, Lock, MessageCircle, MoreVertical } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
@@ -29,6 +30,8 @@ function UserPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const back = useBack("/search");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmMute, setConfirmMute] = useState(false);
   const myBlocks = useQuery({
     queryKey: ["blocks", meId],
     enabled: !!meId,
@@ -127,6 +130,23 @@ function UserPage() {
     onError: () => toast.error("Couldn't send that report"),
   });
 
+  const mute = useMutation({
+    mutationFn: async () => {
+      if (!meId || !target) return;
+      const { error } = await supabase
+        .from("hidden_accounts")
+        .upsert({ owner_id: meId, hidden_id: target.id }, { onConflict: "owner_id,hidden_id", ignoreDuplicates: true });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setConfirmMute(false);
+      toast.success("Account hidden");
+      void qc.invalidateQueries({ queryKey: ["hidden-accounts"] });
+      back();
+    },
+    onError: () => toast.error("Couldn't hide that account"),
+  });
+
   if (profile.isLoading) {
     return <p className="py-20 text-center text-sm text-muted-foreground">Loading profile…</p>;
   }
@@ -174,8 +194,51 @@ function UserPage() {
         <button onClick={back} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <p className="font-display text-lg font-bold">@{target.username}</p>
+        <p className="flex-1 font-display text-lg font-bold">@{target.username}</p>
+        <div className="relative">
+          <button onClick={() => setMenuOpen((o) => !o)} aria-label="More options" className="rounded-full p-1">
+            <MoreVertical className="h-5 w-5" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-9 z-40 w-40 rounded-2xl bg-card p-1 shadow-lg">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setConfirmMute(true);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-secondary"
+              >
+                <EyeOff className="h-4 w-4" /> Mute
+              </button>
+            </div>
+          )}
+        </div>
       </header>
+      {confirmMute && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/70 px-6" onClick={() => setConfirmMute(false)}>
+          <div className="w-full max-w-sm rounded-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <p className="font-display text-lg font-bold">Hide this account?</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              This account will be hidden from your normal Chillsnap view.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setConfirmMute(false)}
+                className="flex-1 rounded-full bg-secondary py-2.5 text-sm font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => mute.mutate()}
+                disabled={mute.isPending}
+                className="gradient-chill flex-1 rounded-full py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
+              >
+                {mute.isPending ? "Hiding…" : "Hide Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="px-4 py-5">
         <div className="flex items-center gap-4">

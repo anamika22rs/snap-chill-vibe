@@ -185,6 +185,42 @@ export type Database = {
           },
         ]
       }
+      hidden_accounts: {
+        Row: {
+          created_at: string
+          hidden_id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_id: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          hidden_id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      hidden_pins: {
+        Row: {
+          pin_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          pin_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          pin_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hidden_posts: {
         Row: {
           created_at: string
@@ -696,7 +732,9 @@ export type Database = {
         Returns: boolean
       }
       can_view_user: { Args: { target: string }; Returns: boolean }
+      check_hidden_pin: { Args: { _pin: string }; Returns: boolean }
       has_chat_with: { Args: { target: string }; Returns: boolean }
+      has_hidden_pin: { Args: never; Returns: boolean }
       is_blocked: { Args: { a: string; b: string }; Returns: boolean }
       my_blocked_accounts: {
         Args: never
@@ -709,6 +747,7 @@ export type Database = {
         }[]
       }
       owns_story: { Args: { _story: string }; Returns: boolean }
+      set_hidden_pin: { Args: { _pin: string }; Returns: undefined }
       username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {

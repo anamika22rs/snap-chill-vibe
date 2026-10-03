@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useHiddenIds } from "@/hooks/useHiddenAccounts";
 import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/search")({
 function SearchPage() {
   const { data: me } = useMe();
   const meId = me?.user.id;
+  const navigate = useNavigate();
+  const hiddenIds = useHiddenIds();
   const [q, setQ] = useState("");
   const term = q.trim();
 
@@ -39,20 +42,38 @@ function SearchPage() {
       return (data ?? []) as Profile[];
     },
   });
+  const visible = results.data?.filter((p) => !hiddenIds.has(p.id));
+
+  async function trySecret() {
+    if (!/^[0-9]{4,8}$/.test(term)) return;
+    const { data } = await supabase.rpc("check_hidden_pin", { _pin: term });
+    if (data === true) {
+      sessionStorage.setItem("chill-hidden-unlocked", String(Date.now()));
+      setQ("");
+      navigate({ to: "/hidden-accounts" });
+    }
+  }
 
   return (
     <>
       <header className="sticky top-0 z-30 glass px-4 py-3">
         <h1 className="font-display text-2xl font-bold text-gradient">Search</h1>
-        <div className="mt-3 flex items-center gap-2 rounded-full bg-card px-4 py-2.5">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void trySecret();
+          }}
+          className="mt-3 flex items-center gap-2 rounded-full bg-card px-4 py-2.5"
+        >
           <SearchIcon className="h-4 w-4 text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by username or name"
+            enterKeyHint="search"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-        </div>
+        </form>
       </header>
 
       <div className="space-y-2 px-4 py-4">
@@ -64,12 +85,12 @@ function SearchPage() {
             Couldn't load people. Pull down to try again.
           </p>
         )}
-        {results.data?.length === 0 && (
+        {visible?.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {term ? `No one matches "${term}" yet.` : "No other members yet."}
           </p>
         )}
-        {results.data?.map((p) => (
+        {visible?.map((p) => (
           <div key={p.id} className="flex items-center gap-3 rounded-3xl bg-card px-4 py-3">
             <Link to="/u/$username" params={{ username: p.username }}>
               <Ava profile={p} size={46} ring />

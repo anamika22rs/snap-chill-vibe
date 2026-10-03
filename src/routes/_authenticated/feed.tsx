@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useHiddenIds } from "@/hooks/useHiddenAccounts";
 import { Plus, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,7 @@ function FeedPage() {
   const [kind, setKind] = useState<"post" | "reel">("post");
 
   const stories = useQuery({ queryKey: ["stories"], queryFn: fetchStories });
+  const hiddenIds = useHiddenIds();
   const posts = useQuery({
     queryKey: ["feed", "post", meId],
     enabled: !!meId,
@@ -76,7 +78,8 @@ function FeedPage() {
   });
 
   const myStories = stories.data?.find((g) => g.author.id === meId);
-  const otherStories = (stories.data ?? []).filter((g) => g.author.id !== meId);
+  const otherStories = (stories.data ?? []).filter((g) => g.author.id !== meId && !hiddenIds.has(g.author.id));
+  const visiblePosts = posts.data?.filter((p) => !hiddenIds.has(p.user_id));
 
   return (
     <>
@@ -130,12 +133,12 @@ function FeedPage() {
 
       <div className="px-4">
         {posts.isLoading && <p className="py-10 text-center text-sm text-muted-foreground">Loading the vibes…</p>}
-        {posts.data?.length === 0 && (
+        {visiblePosts?.length === 0 && (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Nothing here yet. Post something or follow a few people.
           </p>
         )}
-        {meId && posts.data?.map((p) => <PostCard key={p.id} post={p} meId={meId} />)}
+        {meId && visiblePosts?.map((p) => <PostCard key={p.id} post={p} meId={meId} />)}
       </div>
 
       {/* Story viewer */}
