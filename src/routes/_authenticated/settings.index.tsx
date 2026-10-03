@@ -206,6 +206,8 @@ function SettingsPage() {
           </div>
         </section>
 
+        <SecretPin />
+
         <section className="space-y-2">
           <Link
             to="/settings/hidden"
