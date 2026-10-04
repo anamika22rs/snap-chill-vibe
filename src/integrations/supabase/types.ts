@@ -412,29 +412,38 @@ export type Database = {
         Row: {
           caption: string | null
           created_at: string
+          hashtags: string[]
           id: string
           kind: string
           location: string | null
+          media_type: string
           media_url: string | null
           user_id: string
+          vibe: string | null
         }
         Insert: {
           caption?: string | null
           created_at?: string
+          hashtags?: string[]
           id?: string
           kind?: string
           location?: string | null
+          media_type?: string
           media_url?: string | null
           user_id: string
+          vibe?: string | null
         }
         Update: {
           caption?: string | null
           created_at?: string
+          hashtags?: string[]
           id?: string
           kind?: string
           location?: string | null
+          media_type?: string
           media_url?: string | null
           user_id?: string
+          vibe?: string | null
         }
         Relationships: [
           {
