@@ -39,6 +39,7 @@ function ReelVideo({ path, muted, onToggleMute }: { path: string; muted: boolean
     if (!el) return;
     const io = new IntersectionObserver(
       ([e]) => {
+        if (!e) return;
         if (e.isIntersecting && e.intersectionRatio > 0.6) el.play().catch(() => setPlaying(false));
         else el.pause();
       },

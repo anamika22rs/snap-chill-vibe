@@ -19,7 +19,7 @@ type Kind = "post" | "reel" | "story";
 
 export const Route = createFileRoute("/_authenticated/create")({
   validateSearch: (s: Record<string, unknown>): { kind?: Kind } => {
-    const k = s.kind;
+    const k = s['kind'];
     return k === "reel" || k === "story" || k === "post" ? { kind: k } : {};
   },
   head: () => ({
@@ -72,8 +72,8 @@ function CreatePage() {
   const onPickVideo = (file: File) => {
     setUploadError(null);
     const okType = REEL_VIDEO_TYPES.includes(file.type) || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
-    if (!okType) return toast.error("Please choose an MP4, MOV or WebM video");
-    if (file.size > REEL_MAX_BYTES) return toast.error("That video is over 200 MB — pick a shorter one");
+    if (!okType) { toast.error("Please choose an MP4, MOV or WebM video"); return; }
+    if (file.size > REEL_MAX_BYTES) { toast.error("That video is over 200 MB — pick a shorter one"); return; }
     setVideo({ file, preview: URL.createObjectURL(file) });
   };
 

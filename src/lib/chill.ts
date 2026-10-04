@@ -87,8 +87,8 @@ export async function uploadWithProgress(
   const token = data.session?.access_token;
   if (!token) throw new Error("Please sign in again");
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-  const base = import.meta.env.VITE_SUPABASE_URL as string;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+  const base = import.meta.env['VITE_SUPABASE_URL'] as string;
+  const key = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string;
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${base}/storage/v1/object/media/${path}`);
