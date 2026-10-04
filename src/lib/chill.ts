@@ -21,7 +21,12 @@ export type Post = {
   caption: string | null;
   location: string | null;
   created_at: string;
+  media_type?: string;
+  vibe?: string | null;
+  hashtags?: string[];
 };
+
+export const REEL_VIBES = ["Chill", "Hype", "Funny", "Aesthetic", "Romantic", "Travel", "Dance", "Food"];
 
 export const SNAP_FILTERS = [
   { id: "none", label: "Original", className: "filter-none" },
@@ -57,6 +62,57 @@ export async function uploadMedia(file: Blob, userId: string, ext = "jpg") {
     upsert: false,
   });
   if (error) throw error;
+  return path;
+}
+
+export const REEL_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+export const REEL_MAX_BYTES = 200 * 1024 * 1024;
+
+export function videoExt(file: File) {
+  const fromName = file.name.split(".").pop()?.toLowerCase();
+  if (fromName && ["mp4", "mov", "webm", "m4v"].includes(fromName)) return fromName;
+  if (file.type === "video/quicktime") return "mov";
+  if (file.type === "video/webm") return "webm";
+  return "mp4";
+}
+
+/** Uploads a file to the private media bucket, reporting progress (0-100). */
+export async function uploadWithProgress(
+  file: File,
+  userId: string,
+  ext: string,
+  onProgress: (pct: number) => void,
+): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Please sign in again");
+  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+  const base = import.meta.env.VITE_SUPABASE_URL as string;
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${base}/storage/v1/object/media/${path}`);
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.setRequestHeader("apikey", key);
+    xhr.setRequestHeader("x-upsert", "false");
+    xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve();
+      let msg = `Upload failed (${xhr.status})`;
+      try {
+        const body = JSON.parse(xhr.responseText);
+        if (body?.message) msg = `Upload failed: ${body.message}`;
+      } catch {
+        /* ignore */
+      }
+      reject(new Error(msg));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed — check your connection and try again"));
+    xhr.send(file);
+  });
   return path;
 }
 
