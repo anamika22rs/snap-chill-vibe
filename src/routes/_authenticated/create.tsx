@@ -71,9 +71,9 @@ function CreatePage() {
 
   const onPickVideo = (file: File) => {
     setUploadError(null);
-    const okType = REEL_VIDEO_TYPES.includes(file.type) || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
+    const okType = REEL_VIDEO_TYPES.includes(file.type) || file.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
     if (!okType) { toast.error("Please choose an MP4, MOV or WebM video"); return; }
-    if (file.size > REEL_MAX_BYTES) { toast.error("That video is over 200 MB — pick a shorter one"); return; }
+    if (file.size > REEL_MAX_BYTES) { toast.error("Video must be 200 MB or smaller."); return; }
     setVideo({ file, preview: URL.createObjectURL(file) });
   };
 
@@ -249,14 +249,28 @@ function CreatePage() {
             {progress !== null && (
               <div className="mt-4">
                 <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                  <div className="gradient-chill h-full transition-all" style={{ width: `${progress}%` }} />
+                  <div
+                    className={progress < 100 ? "gradient-chill h-full w-1/3 animate-pulse" : "gradient-chill h-full w-full"}
+                  />
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {progress < 100 ? `Uploading… ${progress}%` : "Finishing up…"}
+                  {progress < 100 ? "Uploading video… keep this page open" : "Saving reel…"}
                 </p>
               </div>
             )}
-            {uploadError && <p className="mt-3 text-sm text-destructive">{uploadError}</p>}
+            {uploadError && (
+              <div className="mt-3 rounded-2xl bg-card p-3">
+                <p className="text-sm text-destructive">{uploadError}</p>
+                <button
+                  type="button"
+                  onClick={() => submit.mutate()}
+                  disabled={submit.isPending || !video}
+                  className="mt-2 rounded-full bg-secondary px-4 py-2 text-xs font-bold"
+                >
+                  Retry upload
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <>
