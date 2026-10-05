@@ -76,7 +76,10 @@ export function videoExt(file: File) {
   return "mp4";
 }
 
-/** Uploads a file to the private media bucket, reporting progress (0-100). */
+/**
+ * Uploads a video to the private media bucket at reels/{userId}/{uuid}.{ext}
+ * using resumable (chunked) uploads, which handle large phone videos reliably.
+ */
 export async function uploadWithProgress(
   file: File,
   userId: string,
@@ -85,33 +88,43 @@ export async function uploadWithProgress(
 ): Promise<string> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error("Please sign in again");
-  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-  const base = import.meta.env['VITE_SUPABASE_URL'] as string;
+  if (!token) throw new Error("Your session expired — please sign in again");
+  const projectId = import.meta.env['VITE_SUPABASE_PROJECT_ID'] as string;
   const key = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string;
+  const path = `reels/${userId}/${crypto.randomUUID()}.${ext}`;
+  const contentType =
+    file.type || (ext === "mov" ? "video/quicktime" : ext === "webm" ? "video/webm" : "video/mp4");
+  const { Upload } = await import("tus-js-client");
+
   await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${base}/storage/v1/object/media/${path}`);
-    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-    xhr.setRequestHeader("apikey", key);
-    xhr.setRequestHeader("x-upsert", "false");
-    xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) return resolve();
-      let msg = `Upload failed (${xhr.status})`;
-      try {
-        const body = JSON.parse(xhr.responseText);
-        if (body?.message) msg = `Upload failed: ${body.message}`;
-      } catch {
-        /* ignore */
-      }
-      reject(new Error(msg));
-    };
-    xhr.onerror = () => reject(new Error("Upload failed — check your connection and try again"));
-    xhr.send(file);
+    const upload = new Upload(file, {
+      endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+      retryDelays: [0, 2000, 5000, 10000],
+      headers: { authorization: `Bearer ${token}`, apikey: key, "x-upsert": "false" },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: 6 * 1024 * 1024,
+      metadata: { bucketName: "media", objectName: path, contentType, cacheControl: "3600" },
+      onProgress: (sent, total) => onProgress(total ? Math.round((sent / total) * 100) : 0),
+      onSuccess: () => resolve(),
+      onError: (err) => {
+        const res = (err as { originalResponse?: { getStatus(): number; getBody(): string } | null })
+          .originalResponse;
+        let msg = err.message;
+        if (res) {
+          const body = res.getBody();
+          try {
+            const j = JSON.parse(body);
+            msg = j.message || j.error || body;
+          } catch {
+            msg = body || `status ${res.getStatus()}`;
+          }
+          msg = `${msg} (status ${res.getStatus()})`;
+        }
+        reject(new Error(`Upload failed: ${msg}`));
+      },
+    });
+    upload.start();
   });
   return path;
 }
