@@ -77,8 +77,8 @@ export function videoExt(file: File) {
 }
 
 /**
- * Uploads a video to the private media bucket at reels/{userId}/{uuid}.{ext}
- * using resumable (chunked) uploads, which handle large phone videos reliably.
+ * Uploads a reel video to the private media bucket at reels/{userId}/{uuid}.{ext}
+ * using the standard Storage upload. onProgress gets 0 at start and 100 when done.
  */
 export async function uploadWithProgress(
   file: File,
@@ -86,46 +86,23 @@ export async function uploadWithProgress(
   ext: string,
   onProgress: (pct: number) => void,
 ): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("Your session expired — please sign in again");
-  const projectId = import.meta.env['VITE_SUPABASE_PROJECT_ID'] as string;
-  const key = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string;
-  const path = `reels/${userId}/${crypto.randomUUID()}.${ext}`;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user || auth.user.id !== userId) throw new Error("Your session expired — please sign in again");
+  if (file.size > REEL_MAX_BYTES) throw new Error("Video must be 200 MB or smaller.");
   const contentType =
     file.type || (ext === "mov" ? "video/quicktime" : ext === "webm" ? "video/webm" : "video/mp4");
-  const { Upload } = await import("tus-js-client");
+  if (!contentType.startsWith("video/")) throw new Error("Please choose an MP4, MOV or WebM video");
 
-  await new Promise<void>((resolve, reject) => {
-    const upload = new Upload(file, {
-      endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
-      retryDelays: [0, 2000, 5000, 10000],
-      headers: { authorization: `Bearer ${token}`, apikey: key, "x-upsert": "false" },
-      uploadDataDuringCreation: true,
-      removeFingerprintOnSuccess: true,
-      chunkSize: 6 * 1024 * 1024,
-      metadata: { bucketName: "media", objectName: path, contentType, cacheControl: "3600" },
-      onProgress: (sent, total) => onProgress(total ? Math.round((sent / total) * 100) : 0),
-      onSuccess: () => resolve(),
-      onError: (err) => {
-        const res = (err as { originalResponse?: { getStatus(): number; getBody(): string } | null })
-          .originalResponse;
-        let msg = err.message;
-        if (res) {
-          const body = res.getBody();
-          try {
-            const j = JSON.parse(body);
-            msg = j.message || j.error || body;
-          } catch {
-            msg = body || `status ${res.getStatus()}`;
-          }
-          msg = `${msg} (status ${res.getStatus()})`;
-        }
-        reject(new Error(`Upload failed: ${msg}`));
-      },
-    });
-    upload.start();
-  });
+  const path = `reels/${userId}/${crypto.randomUUID()}.${ext}`;
+  onProgress(0);
+  const { error } = await supabase.storage
+    .from("media")
+    .upload(path, file, { contentType, upsert: false, cacheControl: "3600" });
+  if (error) {
+    const status = (error as { statusCode?: string | number }).statusCode;
+    throw new Error(`Upload failed: ${error.message}${status ? ` (status ${status})` : ""}`);
+  }
+  onProgress(100);
   return path;
 }
 
