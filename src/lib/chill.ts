@@ -76,9 +76,34 @@ export function videoExt(file: File) {
   return "mp4";
 }
 
+function describeStorageError(error: unknown): string {
+  const e = error as { message?: string; statusCode?: string | number; status?: number; error?: string; originalError?: { message?: string } };
+  const parts = [e?.message || "Unknown error"];
+  const status = e?.statusCode ?? e?.status;
+  if (status) parts.push(`status ${status}`);
+  if (e?.error && e.error !== e.message) parts.push(e.error);
+  if (e?.originalError?.message && e.originalError.message !== e.message) parts.push(e.originalError.message);
+  return parts.join(" · ");
+}
+
+/** True when the browser can reach the storage service at all. */
+async function storageReachable(): Promise<boolean> {
+  try {
+    const base = import.meta.env['VITE_SUPABASE_URL'] as string;
+    const res = await fetch(`${base}/storage/v1/version`, { method: "GET", cache: "no-store" });
+    return res.status > 0;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Uploads a reel video to the private media bucket at reels/{userId}/{uuid}.{ext}
  * using the standard Storage upload. onProgress gets 0 at start and 100 when done.
+ *
+ * The file is copied into memory first: on Android, gallery/cloud files picked via
+ * <input type=file> can become unreadable mid-request, which surfaces as a bare
+ * "Failed to fetch". Reading upfront makes that failure explicit and the upload stable.
  */
 export async function uploadWithProgress(
   file: File,
@@ -86,21 +111,51 @@ export async function uploadWithProgress(
   ext: string,
   onProgress: (pct: number) => void,
 ): Promise<string> {
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user || auth.user.id !== userId) throw new Error("Your session expired — please sign in again");
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) throw new Error("You're signed out — please sign in again, then retry.");
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !auth.user || auth.user.id !== userId)
+    throw new Error(`Your session expired — please sign in again. ${authErr ? describeStorageError(authErr) : ""}`.trim());
   if (file.size > REEL_MAX_BYTES) throw new Error("Video must be 200 MB or smaller.");
+  if (file.size === 0) throw new Error("This video file is empty — pick another one.");
   const contentType =
     file.type || (ext === "mov" ? "video/quicktime" : ext === "webm" ? "video/webm" : "video/mp4");
   if (!contentType.startsWith("video/")) throw new Error("Please choose an MP4, MOV or WebM video");
+  if (typeof navigator !== "undefined" && navigator.onLine === false)
+    throw new Error("You're offline — connect to the internet and tap Retry upload.");
+
+  onProgress(0);
+  let body: Blob;
+  try {
+    body = new Blob([await file.arrayBuffer()], { type: contentType });
+  } catch (err) {
+    throw new Error(
+      `Couldn't read the video from your phone (${err instanceof Error ? err.message : "read error"}). ` +
+        "If it's stored in Google Photos/Drive, download it to your device first, then pick it again.",
+    );
+  }
 
   const path = `reels/${userId}/${crypto.randomUUID()}.${ext}`;
-  onProgress(0);
-  const { error } = await supabase.storage
-    .from("media")
-    .upload(path, file, { contentType, upsert: false, cacheControl: "3600" });
+  const attempt = () =>
+    supabase.storage.from("media").upload(path, body, { contentType, upsert: false, cacheControl: "3600" });
+
+  let { error } = await attempt();
+  // One automatic retry for transient network drops (common on mobile data).
+  if (error && /fetch|network/i.test(error.message)) {
+    await new Promise((r) => setTimeout(r, 1500));
+    ({ error } = await attempt());
+  }
   if (error) {
-    const status = (error as { statusCode?: string | number }).statusCode;
-    throw new Error(`Upload failed: ${error.message}${status ? ` (status ${status})` : ""}`);
+    const detail = describeStorageError(error);
+    if (/fetch|network/i.test(error.message)) {
+      const reachable = await storageReachable();
+      throw new Error(
+        reachable
+          ? `Upload failed: ${detail}. The connection dropped while sending the video (${Math.round(file.size / 1048576)} MB) — try Wi-Fi or a shorter video, then tap Retry upload.`
+          : `Upload failed: ${detail}. Your network can't reach ChillSnap's storage right now — check your internet, turn off any VPN/ad-blocker or data saver, then tap Retry upload.`,
+      );
+    }
+    throw new Error(`Upload failed: ${detail}`);
   }
   onProgress(100);
   return path;
