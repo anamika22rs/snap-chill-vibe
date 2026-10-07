@@ -9,7 +9,7 @@ import { Ava } from "@/components/chill/Ava";
 import type { Profile } from "@/lib/chill";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/hidden-accounts")({
+export const Route = createFileRoute("/_authenticated/quiet")({
   head: () => ({
     meta: [
       { title: "Accounts — ChillSnap" },

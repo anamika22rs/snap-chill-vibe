@@ -16,8 +16,8 @@ import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
-import { Route as AuthenticatedHiddenAccountsRouteImport } from './routes/_authenticated/hidden-accounts'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedQuietRouteImport } from './routes/_authenticated/quiet'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedSnapRouteImport } from './routes/_authenticated/snap'
@@ -61,15 +61,14 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedHiddenAccountsRoute =
-  AuthenticatedHiddenAccountsRouteImport.update({
-    id: '/hidden-accounts',
-    path: '/hidden-accounts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuietRoute = AuthenticatedQuietRouteImport.update({
+  id: '/quiet',
+  path: '/quiet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReelsRoute = AuthenticatedReelsRouteImport.update({
@@ -122,8 +121,8 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/quiet': typeof AuthenticatedQuietRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/snap': typeof AuthenticatedSnapRoute
@@ -140,8 +139,8 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedCreateRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/quiet': typeof AuthenticatedQuietRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/snap': typeof AuthenticatedSnapRoute
@@ -160,8 +159,8 @@ export interface FileRoutesById {
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
-  '/_authenticated/hidden-accounts': typeof AuthenticatedHiddenAccountsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/quiet': typeof AuthenticatedQuietRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/snap': typeof AuthenticatedSnapRoute
@@ -180,8 +179,8 @@ export interface FileRouteTypes {
     | '/create'
     | '/feed'
     | '/help'
-    | '/hidden-accounts'
     | '/profile'
+    | '/quiet'
     | '/reels'
     | '/search'
     | '/snap'
@@ -198,8 +197,8 @@ export interface FileRouteTypes {
     | '/create'
     | '/feed'
     | '/help'
-    | '/hidden-accounts'
     | '/profile'
+    | '/quiet'
     | '/reels'
     | '/search'
     | '/snap'
@@ -217,8 +216,8 @@ export interface FileRouteTypes {
     | '/_authenticated/create'
     | '/_authenticated/feed'
     | '/_authenticated/help'
-    | '/_authenticated/hidden-accounts'
     | '/_authenticated/profile'
+    | '/_authenticated/quiet'
     | '/_authenticated/reels'
     | '/_authenticated/search'
     | '/_authenticated/snap'
@@ -286,18 +285,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/hidden-accounts': {
-      id: '/_authenticated/hidden-accounts'
-      path: '/hidden-accounts'
-      fullPath: '/hidden-accounts'
-      preLoaderRoute: typeof AuthenticatedHiddenAccountsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quiet': {
+      id: '/_authenticated/quiet'
+      path: '/quiet'
+      fullPath: '/quiet'
+      preLoaderRoute: typeof AuthenticatedQuietRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reels': {
@@ -364,8 +363,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
-  AuthenticatedHiddenAccountsRoute: typeof AuthenticatedHiddenAccountsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedQuietRoute: typeof AuthenticatedQuietRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSnapRoute: typeof AuthenticatedSnapRoute
@@ -381,8 +380,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
-  AuthenticatedHiddenAccountsRoute: AuthenticatedHiddenAccountsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedQuietRoute: AuthenticatedQuietRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSnapRoute: AuthenticatedSnapRoute,
