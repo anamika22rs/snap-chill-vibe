@@ -9,6 +9,7 @@ import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import { Media } from "@/components/chill/Media";
 import { FollowButton } from "@/components/chill/FollowButton";
+import { Button } from "@/components/ui/button";
 import type { Post, Profile } from "@/lib/chill";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
@@ -140,11 +141,13 @@ function UserPage() {
     },
     onSuccess: () => {
       setConfirmMute(false);
-      toast.success("Account hidden");
+      toast.success("Quiet Mode enabled");
       void qc.invalidateQueries({ queryKey: ["hidden-accounts"] });
+      void qc.invalidateQueries({ queryKey: ["hidden-accounts-list"] });
+      void qc.invalidateQueries({ queryKey: ["friends"] });
       back();
     },
-    onError: () => toast.error("Couldn't hide that account"),
+    onError: () => toast.error("Couldn't enable Quiet Mode"),
   });
 
   if (profile.isLoading) {
@@ -201,7 +204,7 @@ function UserPage() {
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-9 z-40 w-40 rounded-2xl bg-card p-1 shadow-lg">
-              <button
+              <Button variant="ghost"
                 onClick={() => {
                   setMenuOpen(false);
                   setConfirmMute(true);
@@ -209,32 +212,29 @@ function UserPage() {
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-secondary"
               >
                 <EyeOff className="h-4 w-4" /> Mute
-              </button>
+              </Button>
             </div>
           )}
         </div>
       </header>
       {confirmMute && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/70 px-6" onClick={() => setConfirmMute(false)}>
-          <div className="w-full max-w-sm rounded-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
-            <p className="font-display text-lg font-bold">Hide this account?</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              This account will be hidden from your normal Chillsnap view.
-            </p>
+          <div role="dialog" aria-modal="true" aria-labelledby="mute-title" className="w-full max-w-sm rounded-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <p id="mute-title" className="font-display text-lg font-bold">Mute</p>
             <div className="mt-5 flex gap-2">
-              <button
+              <Button variant="secondary"
                 onClick={() => setConfirmMute(false)}
                 className="flex-1 rounded-full bg-secondary py-2.5 text-sm font-bold"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => mute.mutate()}
                 disabled={mute.isPending}
                 className="gradient-chill flex-1 rounded-full py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
               >
-                {mute.isPending ? "Hiding…" : "Hide Account"}
-              </button>
+                {mute.isPending ? "Enabling…" : "Quiet Mode"}
+              </Button>
             </div>
           </div>
         </div>
