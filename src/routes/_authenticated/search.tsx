@@ -52,7 +52,7 @@ function SearchPage() {
     if (data === true) {
       sessionStorage.setItem("chill-hidden-unlocked", String(Date.now()));
       setQ("");
-      navigate({ to: "/hidden-accounts" });
+      navigate({ to: "/quiet" });
     }
   }
 
