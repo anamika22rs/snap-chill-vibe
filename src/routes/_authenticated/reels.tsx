@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/reels")({
       { name: "description", content: "Watch vertical video reels from people on ChillSnap." },
       { property: "og:title", content: "Reels — ChillSnap" },
       { property: "og:description", content: "Vertical video reels from your crew." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReelsPage,

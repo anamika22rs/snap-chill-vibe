@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/u/$username")({
       { name: "description", content: "A ChillSnap member's profile, posts and snap score." },
       { property: "og:title", content: "Profile — ChillSnap" },
       { property: "og:description", content: "A ChillSnap member's profile and posts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: UserPage,

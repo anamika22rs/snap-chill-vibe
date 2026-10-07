@@ -28,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/create")({
       { name: "description", content: "Post, drop a video reel or add a 24-hour story on ChillSnap." },
       { property: "og:title", content: "Create — ChillSnap" },
       { property: "og:description", content: "Post, drop a video reel or add a 24-hour story." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CreatePage,

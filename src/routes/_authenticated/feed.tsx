@@ -21,6 +21,8 @@ export const Route = createFileRoute("/_authenticated/feed")({
       { name: "description", content: "Your ChillSnap feed: stories on top, posts below." },
       { property: "og:title", content: "Feed — ChillSnap" },
       { property: "og:description", content: "Stories on top, posts below." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FeedPage,

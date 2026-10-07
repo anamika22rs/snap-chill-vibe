@@ -22,6 +22,8 @@ export const Route = createFileRoute("/_authenticated/snap")({
       },
       { property: "og:title", content: "Snaps — ChillSnap" },
       { property: "og:description", content: "Disappearing snaps, filters and fire streaks." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SnapPage,

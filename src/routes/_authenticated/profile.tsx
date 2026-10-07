@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/profile")({
       { name: "description", content: "Your ChillSnap profile, posts and settings." },
       { property: "og:title", content: "Your profile — ChillSnap" },
       { property: "og:description", content: "Your ChillSnap profile, posts and settings." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProfilePage,

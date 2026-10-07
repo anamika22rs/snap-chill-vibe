@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/settings/")({
       { name: "description", content: "Privacy, blocked accounts, support and sign out." },
       { property: "og:title", content: "Settings — ChillSnap" },
       { property: "og:description", content: "Privacy, blocked accounts, support and sign out." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SettingsPage,
