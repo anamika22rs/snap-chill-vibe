@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMe } from "@/hooks/useMe";
 import { Ava } from "@/components/chill/Ava";
 import { timeAgo, type Profile } from "@/lib/chill";
+import { useHiddenIds } from "@/hooks/useHiddenAccounts";
+import { discoverableAccounts } from "@/lib/quietMode";
 
 type Row = {
   sender_id: string;
@@ -22,6 +24,7 @@ export function ChatList({ title = "Chats" }: { title?: string }) {
   const meId = me?.user.id;
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const quietIds = useHiddenIds();
 
   const chats = useQuery({
     queryKey: ["chats", meId],
@@ -94,10 +97,10 @@ export function ChatList({ title = "Chats" }: { title?: string }) {
       {q.trim() ? (
         <div className="space-y-2 px-4 py-4">
           {people.isLoading && <p className="text-center text-sm text-muted-foreground">Searching…</p>}
-          {people.data?.length === 0 && (
+          {people.data && discoverableAccounts(people.data, quietIds).length === 0 && (
             <p className="text-center text-sm text-muted-foreground">No users match “{q}”.</p>
           )}
-          {people.data?.map((p) => (
+          {discoverableAccounts(people.data ?? [], quietIds).map((p) => (
             <Link
               key={p.id}
               to="/chat/$userId"
