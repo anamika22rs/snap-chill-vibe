@@ -16,6 +16,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "An endless feed, 24-hour snaps, fire streaks, filters and a live snap map.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Landing,

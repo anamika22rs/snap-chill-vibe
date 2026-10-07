@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/settings/")({
       { name: "description", content: "Privacy, blocked accounts, support and sign out." },
       { property: "og:title", content: "Settings — ChillSnap" },
       { property: "og:description", content: "Privacy, blocked accounts, support and sign out." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SettingsPage,
@@ -69,7 +71,7 @@ function SettingsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, value) => {
-      toast.success(value ? "Your account is hidden" : "Your account is visible again");
+      toast.success(value ? "Discovery paused" : "Discovery enabled");
       void qc.invalidateQueries({ queryKey: ["me"] });
     },
     onError: () => toast.error("Couldn't change that setting"),
@@ -167,12 +169,8 @@ function SettingsPage() {
           </Row>
           <Row
             icon={<EyeOff className="h-4 w-4 text-primary" />}
-            title={profile?.is_hidden ? "Unhide account" : "Hide account"}
-            subtitle={
-              profile?.is_hidden
-                ? "Your account is hidden. Only people you already chat with can see it."
-                : "Hide from search and discovery. Your chats and data stay saved."
-            }
+            title="Pause discovery"
+            subtitle="Manage your profile's discovery preference"
           >
             <Toggle
               on={!!profile?.is_hidden}
@@ -316,8 +314,8 @@ function SecretPin() {
       </h2>
       <p className="pt-2 text-xs text-muted-foreground">
         {has.data
-          ? "Your PIN is set. Type it in Search and press Enter to open your hidden accounts."
-          : "Set a 4–8 digit PIN. Type it in Search and press Enter to open accounts you've hidden."}
+          ? "Your PIN is set."
+          : "Set a 4–8 digit PIN."}
       </p>
       <form
         onSubmit={(e) => {

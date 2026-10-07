@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/search")({
       { name: "description", content: "Find registered ChillSnap users by username." },
       { property: "og:title", content: "Search people — ChillSnap" },
       { property: "og:description", content: "Find registered ChillSnap users by username." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SearchPage,

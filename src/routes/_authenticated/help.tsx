@@ -15,6 +15,8 @@ export const Route = createFileRoute("/_authenticated/help")({
       { name: "description", content: "ChillSnap FAQ and a form to report a problem." },
       { property: "og:title", content: "Help & Support — ChillSnap" },
       { property: "og:description", content: "ChillSnap FAQ and a form to report a problem." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: HelpPage,

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { FeedPost } from "@/components/chill/PostCard";
 import type { Post, Profile } from "@/lib/chill";
+import { discoverableAccounts } from "./quietMode";
 
 export async function fetchPosts(kind: "post" | "reel", meId: string): Promise<FeedPost[]> {
   const [{ data: rows }, { data: hidden }] = await Promise.all([
@@ -70,14 +71,17 @@ export async function fetchStories(): Promise<StoryGroup[]> {
 }
 
 export async function fetchFriends(meId: string): Promise<Profile[]> {
+  const { data: quiet, error: quietError } = await supabase.from("hidden_accounts").select("hidden_id").eq("owner_id", meId);
+  if (quietError) throw quietError;
+  const quietIds = new Set((quiet ?? []).map((row) => row.hidden_id));
   const { data } = await supabase
     .from("follows")
     .select("following:profiles!follows_following_profile_fkey(*)")
     .eq("follower_id", meId)
     .eq("status", "accepted");
-  const friends = ((data ?? []) as Array<{ following: Profile }>)
+  const friends = discoverableAccounts(((data ?? []) as Array<{ following: Profile }>)
     .map((r) => r.following)
-    .filter(Boolean);
+    .filter(Boolean), quietIds);
   if (friends.length > 0) return friends;
 
   // New account with nobody followed yet: suggest other chillers.
@@ -87,5 +91,5 @@ export async function fetchFriends(meId: string): Promise<Profile[]> {
     .neq("id", meId)
     .order("created_at", { ascending: false })
     .limit(20);
-  return (others ?? []) as Profile[];
+  return discoverableAccounts((others ?? []) as Profile[], quietIds);
 }

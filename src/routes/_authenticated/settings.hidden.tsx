@@ -13,6 +13,8 @@ export const Route = createFileRoute("/_authenticated/settings/hidden")({
       { name: "description", content: "Posts you've hidden from your ChillSnap feed." },
       { property: "og:title", content: "Hidden posts — ChillSnap" },
       { property: "og:description", content: "Posts you've hidden from your feed." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: HiddenPosts,
