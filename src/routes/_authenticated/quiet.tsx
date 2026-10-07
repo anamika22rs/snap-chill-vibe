@@ -66,7 +66,7 @@ function HiddenAccounts() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Quiet Mode disabled");
+      toast.success("Unmuted");
       void qc.invalidateQueries({ queryKey: ["hidden-accounts"] });
       void qc.invalidateQueries({ queryKey: ["hidden-accounts-list"] });
       void qc.invalidateQueries({ queryKey: ["friends"] });
@@ -86,7 +86,7 @@ function HiddenAccounts() {
         <Button variant="ghost" size="icon" onClick={leave} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="font-display text-xl font-bold">Accounts</h1>
+        <h1 className="font-display text-xl font-bold">Quiet Mode</h1>
       </header>
       <div className="space-y-2 px-4 py-5">
         {list.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
@@ -110,7 +110,7 @@ function HiddenAccounts() {
               disabled={unhide.isPending}
               className="flex items-center gap-1 rounded-full bg-secondary px-3 py-2 text-xs font-bold disabled:opacity-60"
             >
-              <Eye className="h-3.5 w-3.5" /> Unhide
+              <Eye className="h-3.5 w-3.5" /> Unmute
             </Button>
           </div>
         ))}
