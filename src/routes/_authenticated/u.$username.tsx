@@ -10,6 +10,8 @@ import { Ava } from "@/components/chill/Ava";
 import { Media } from "@/components/chill/Media";
 import { FollowButton } from "@/components/chill/FollowButton";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { useHiddenIds } from "@/hooks/useHiddenAccounts";
 import type { Post, Profile } from "@/lib/chill";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
@@ -35,6 +37,7 @@ function UserPage() {
   const back = useBack("/search");
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmMute, setConfirmMute] = useState(false);
+  const quietIds = useHiddenIds();
   const myBlocks = useQuery({
     queryKey: ["blocks", meId],
     enabled: !!meId,
@@ -133,23 +136,32 @@ function UserPage() {
     onError: () => toast.error("Couldn't send that report"),
   });
 
+  const quietOn = !!target && quietIds.has(target.id);
   const mute = useMutation({
-    mutationFn: async () => {
-      if (!meId || !target) return;
-      const { error } = await supabase
-        .from("hidden_accounts")
-        .upsert({ owner_id: meId, hidden_id: target.id }, { onConflict: "owner_id,hidden_id", ignoreDuplicates: true });
-      if (error) throw error;
+    mutationFn: async (enable: boolean) => {
+      if (!meId || !target) throw new Error("Please sign in again");
+      if (enable) {
+        const { error } = await supabase
+          .from("hidden_accounts")
+          .upsert({ owner_id: meId, hidden_id: target.id }, { onConflict: "owner_id,hidden_id", ignoreDuplicates: true });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("hidden_accounts")
+          .delete()
+          .eq("owner_id", meId)
+          .eq("hidden_id", target.id);
+        if (error) throw error;
+      }
+      return enable;
     },
-    onSuccess: () => {
-      setConfirmMute(false);
-      toast.success("Quiet Mode enabled");
-      void qc.invalidateQueries({ queryKey: ["hidden-accounts"] });
+    onSuccess: async (enable) => {
+      await qc.invalidateQueries({ queryKey: ["hidden-accounts"] });
       void qc.invalidateQueries({ queryKey: ["hidden-accounts-list"] });
       void qc.invalidateQueries({ queryKey: ["friends"] });
-      back();
+      toast.success(enable ? "Quiet Mode on" : "Quiet Mode off");
     },
-    onError: () => toast.error("Couldn't enable Quiet Mode"),
+    onError: (e: Error) => toast.error(`Couldn't update Quiet Mode: ${e.message}`),
   });
 
   if (profile.isLoading) {
@@ -220,24 +232,24 @@ function UserPage() {
         </div>
       </header>
       {confirmMute && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/70 px-6" onClick={() => setConfirmMute(false)}>
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-background/70 px-4 pb-6 sm:items-center" onClick={() => setConfirmMute(false)}>
           <div role="dialog" aria-modal="true" aria-labelledby="mute-title" className="w-full max-w-sm rounded-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
-            <p id="mute-title" className="font-display text-lg font-bold">Mute</p>
-            <div className="mt-5 flex gap-2">
-              <Button variant="secondary"
-                onClick={() => setConfirmMute(false)}
-                className="flex-1 rounded-full bg-secondary py-2.5 text-sm font-bold"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => mute.mutate()}
+            <p id="mute-title" className="font-display text-lg font-bold">Mute @{target.username}</p>
+            <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
+              <span className="text-sm font-semibold">Quiet Mode</span>
+              <Switch
+                aria-label="Quiet Mode"
+                checked={quietOn}
                 disabled={mute.isPending}
-                className="gradient-chill flex-1 rounded-full py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
-              >
-                {mute.isPending ? "Enabling…" : "Quiet Mode"}
-              </Button>
-            </div>
+                onCheckedChange={(v) => mute.mutate(v)}
+              />
+            </label>
+            <Button variant="secondary"
+              onClick={() => setConfirmMute(false)}
+              className="mt-4 w-full rounded-full py-2.5 text-sm font-bold"
+            >
+              Done
+            </Button>
           </div>
         </div>
       )}
