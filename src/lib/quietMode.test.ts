@@ -8,6 +8,6 @@ test("Quiet Mode excludes only the selected account from recommendations", () =>
   deepStrictEqual(accounts, [{ id: "quiet-user" }, { id: "other-user" }]);
 });
 
-test("Unhide restores the account to discovery", () => {
+test("Unmute restores the account to discovery", () => {
   deepStrictEqual(discoverableAccounts([{ id: "quiet-user" }], new Set()), [{ id: "quiet-user" }]);
 });
