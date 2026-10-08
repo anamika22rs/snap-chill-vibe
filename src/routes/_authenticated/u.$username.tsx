@@ -139,17 +139,18 @@ function UserPage() {
   const quietOn = !!target && quietIds.has(target.id);
   const mute = useMutation({
     mutationFn: async (enable: boolean) => {
-      if (!meId || !target) throw new Error("Please sign in again");
+      const ownerId = meId ?? (await supabase.auth.getUser()).data.user?.id;
+      if (!ownerId || !target) throw new Error("Please sign in again");
       if (enable) {
         const { error } = await supabase
           .from("hidden_accounts")
-          .upsert({ owner_id: meId, hidden_id: target.id }, { onConflict: "owner_id,hidden_id", ignoreDuplicates: true });
+          .upsert({ owner_id: ownerId, hidden_id: target.id }, { onConflict: "owner_id,hidden_id", ignoreDuplicates: true });
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("hidden_accounts")
           .delete()
-          .eq("owner_id", meId)
+          .eq("owner_id", ownerId)
           .eq("hidden_id", target.id);
         if (error) throw error;
       }
